@@ -2,6 +2,9 @@
 
 void InventoryManager::setInventory(const ProductId& productId,
                                     ProductCount quantity) {
+    ProductCount oldQuantity = inventory_[productId];
     inventory_[productId] = quantity;
-    this->notify(productId, quantity);
+    if (oldQuantity != quantity) {
+        this->notify(productId, quantity);
+    }
 }
