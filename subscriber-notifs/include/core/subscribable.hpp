@@ -39,7 +39,10 @@ class Subscribable {
             return;
         }
 
-        for (auto& subscriber : entry->second) {
+        // edge case: if a subscriber unsubscribes itself during notification
+        // this modifies the vector and makes my iterators invalid
+        auto subscribersCopy = entry->second;
+        for (auto& subscriber : subscribersCopy) {
             subscriber->onNotification(eventId, eventInfo);
         }
     }
