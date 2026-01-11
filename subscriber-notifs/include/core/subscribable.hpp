@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include <unordered_map>
 #include <vector>
 
@@ -10,14 +11,17 @@ class Subscribable {
     using TSubscriber = Subscriber<TEventId, TEventInfo>;
 
    private:
-    std::unordered_map<TEventId, std::vector<TSubscriber*>> subscribersMap_;
+    std::unordered_map<TEventId, std::vector<std::shared_ptr<TSubscriber>>>
+        subscribersMap_;
 
    public:
-    void subscribe(const TEventId& eventId, TSubscriber* subscriber) {
+    void subscribe(const TEventId& eventId,
+                   std::shared_ptr<TSubscriber> subscriber) {
         subscribersMap_[eventId].push_back(subscriber);
     }
 
-    void unsubscribe(const TEventId& eventId, TSubscriber* subscriber) {
+    void unsubscribe(const TEventId& eventId,
+                     std::shared_ptr<TSubscriber> subscriber) {
         auto entry = subscribersMap_.find(eventId);
         if (entry == subscribersMap_.end()) {
             return;
@@ -29,13 +33,13 @@ class Subscribable {
         }
     }
 
-    void notify(const TEventId& eventId, const TEventInfo& eventInfo) {
+    void notify(const TEventId& eventId, const TEventInfo& eventInfo) const {
         auto entry = subscribersMap_.find(eventId);
         if (entry == subscribersMap_.end()) {
             return;
         }
 
-        for (TSubscriber* subscriber : entry->second) {
+        for (auto& subscriber : entry->second) {
             subscriber->onNotification(eventId, eventInfo);
         }
     }
