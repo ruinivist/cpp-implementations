@@ -1,0 +1,445 @@
+<!-- AI GENERATED SIMULATION -->
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Iterative SegTree (Dark Mode)</title>
+    <style>
+      :root {
+        /* Dark Mode Palette */
+        --bg-body: #0f172a; /* Slate 950 */
+        --bg-panel: #1e293b; /* Slate 800 */
+        --text-main: #f1f5f9; /* Slate 100 */
+        --text-muted: #94a3b8; /* Slate 400 */
+
+        --node-bg: #334155; /* Slate 700 */
+        --node-border: #475569; /* Slate 600 */
+
+        /* Accents (Lighter for dark mode visibility) */
+        --highlight-l: #60a5fa; /* Blue 400 */
+        --highlight-r: #f87171; /* Red 400 */
+        --selected: #10b981; /* Emerald 500 */
+        --selected-bg: #064e3b; /* Emerald 900 */
+      }
+
+      body {
+        font-family: "Segoe UI", system-ui, sans-serif;
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 20px;
+        margin: 0;
+      }
+
+      h2 {
+        margin-bottom: 10px;
+        font-weight: 300;
+        letter-spacing: 1px;
+      }
+
+      /* --- Controls --- */
+      .controls {
+        background: var(--bg-panel);
+        padding: 15px 25px;
+        border-radius: 12px;
+        border: 1px solid var(--node-border);
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        margin-bottom: 20px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        z-index: 10;
+      }
+
+      input {
+        width: 40px;
+        padding: 8px;
+        text-align: center;
+        background: var(--bg-body);
+        border: 1px solid var(--node-border);
+        color: var(--text-main);
+        border-radius: 6px;
+        font-size: 16px;
+      }
+      input:focus {
+        outline: 2px solid var(--highlight-l);
+        border-color: transparent;
+      }
+
+      button {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.2s;
+        color: #fff;
+      }
+      #btn-start {
+        background-color: #2563eb;
+      } /* Blue 600 */
+      #btn-start:hover {
+        background-color: #3b82f6;
+      }
+
+      #btn-step {
+        background-color: #d97706;
+      } /* Amber 600 */
+      #btn-step:hover {
+        background-color: #f59e0b;
+      }
+
+      #btn-reset {
+        background-color: #475569;
+      } /* Slate 600 */
+      #btn-reset:hover {
+        background-color: #64748b;
+      }
+
+      button:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+        filter: grayscale(1);
+      }
+
+      /* --- Info & Results --- */
+      .info-panel {
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        gap: 20px;
+        margin-bottom: 20px;
+      }
+      .explanation {
+        flex: 2;
+        background: var(--bg-panel);
+        padding: 15px;
+        border-left: 4px solid var(--highlight-l);
+        border-radius: 6px;
+        min-height: 60px;
+        display: flex;
+        align-items: center;
+        line-height: 1.5;
+      }
+      .result-box {
+        flex: 1;
+        background: var(--bg-panel);
+        padding: 15px;
+        border-radius: 6px;
+        border: 1px dashed var(--node-border);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-content: flex-start;
+      }
+      .mini-badge {
+        font-size: 11px;
+        background: var(--selected-bg);
+        color: var(--selected);
+        border: 1px solid var(--selected);
+        padding: 4px 8px;
+        border-radius: 4px;
+      }
+
+      /* --- Visualization Area --- */
+      #viz-container {
+        width: 800px;
+        height: 400px;
+        background: var(--bg-panel);
+        border-radius: 12px;
+        border: 1px solid var(--node-border);
+        position: relative;
+        box-shadow: inset 0 0 30px rgba(0, 0, 0, 0.2);
+      }
+
+      /* --- Nodes --- */
+      .node {
+        position: absolute;
+        width: 44px;
+        height: 44px;
+        background: var(--node-bg);
+        border: 2px solid var(--node-border);
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        color: var(--text-main);
+        transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        cursor: default;
+        transform: translate(-50%, -50%);
+        z-index: 2;
+      }
+
+      /* Index label above node */
+      .node .idx {
+        position: absolute;
+        top: -18px;
+        font-size: 10px;
+        color: var(--text-muted);
+        font-weight: normal;
+      }
+
+      /* L/R Pointer label below node */
+      .node .ptr-label {
+        position: absolute;
+        bottom: -28px;
+        font-size: 16px;
+        font-weight: 900;
+        opacity: 0;
+        transition: opacity 0.2s;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      /* --- Active States --- */
+      .node.ptr-l {
+        border-color: var(--highlight-l);
+        box-shadow: 0 0 15px rgba(96, 165, 250, 0.4);
+        background: #1e3a8a; /* Darker Blue */
+      }
+      .node.ptr-l .ptr-label {
+        opacity: 1;
+        color: var(--highlight-l);
+      }
+
+      .node.ptr-r {
+        border-color: var(--highlight-r);
+        box-shadow: 0 0 15px rgba(248, 113, 113, 0.4);
+        background: #450a0a; /* Darker Red */
+      }
+      .node.ptr-r .ptr-label {
+        opacity: 1;
+        color: var(--highlight-r);
+      }
+
+      .node.selected {
+        background-color: var(--selected);
+        color: #fff;
+        border-color: #059669;
+        transform: translate(-50%, -50%) scale(1.15);
+        box-shadow: 0 0 20px rgba(16, 185, 129, 0.4);
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Iterative Segment Tree</h2>
+
+    <div class="controls">
+      <label>Range [L, R):</label>
+      <input type="number" id="lInput" value="1" min="0" max="7" />
+      <span style="color: var(--text-muted)">to</span>
+      <input type="number" id="rInput" value="7" min="1" max="8" />
+      <button id="btn-start" onclick="initQuery()">Start Query</button>
+      <button id="btn-step" onclick="nextStep()" disabled>Step ▶</button>
+      <button id="btn-reset" onclick="resetSim()">Reset</button>
+    </div>
+
+    <div class="info-panel">
+      <div class="explanation" id="explanation">
+        Ready. Set the range and click "Start Query".
+      </div>
+      <div class="result-box" id="result-box">
+        <small style="width: 100%; color: var(--text-muted); margin-bottom: 5px"
+          >Accumulator:</small
+        >
+      </div>
+    </div>
+
+    <div id="viz-container"></div>
+
+    <script>
+      const n = 8;
+      const width = 800;
+      const height = 400;
+      const levelGap = 90;
+
+      let treeData = [];
+      let coords = {};
+      let l, r;
+      let isRunning = false;
+      let stepState = 0;
+
+      // --- Initialization ---
+
+      function initTreeData() {
+        treeData = Array(2 * n).fill(0);
+        for (let i = 0; i < n; i++) treeData[n + i] = i + 1;
+        for (let i = n - 1; i > 0; i--)
+          treeData[i] = treeData[2 * i] + treeData[2 * i + 1];
+      }
+
+      function calculateCoords() {
+        const segmentWidth = width / n;
+        for (let i = 0; i < n; i++) {
+          let idx = n + i;
+          coords[idx] = {
+            x: i * segmentWidth + segmentWidth / 2,
+            y: height - 60,
+          };
+        }
+        for (let i = n - 1; i > 0; i--) {
+          const leftChild = coords[2 * i];
+          const rightChild = coords[2 * i + 1];
+          coords[i] = {
+            x: (leftChild.x + rightChild.x) / 2,
+            y: leftChild.y - levelGap,
+          };
+        }
+      }
+
+      function renderNodes() {
+        const container = document.getElementById("viz-container");
+        container.innerHTML = "";
+        for (let i = 1; i < 2 * n; i++) {
+          const pos = coords[i];
+          const node = document.createElement("div");
+          node.className = "node";
+          node.id = `node-${i}`;
+          node.style.left = pos.x + "px";
+          node.style.top = pos.y + "px";
+          node.innerHTML = `
+                    <span class="idx">${i}</span>
+                    ${treeData[i]}
+                    <span class="ptr-label" id="ptr-${i}"></span>
+                `;
+          container.appendChild(node);
+        }
+      }
+
+      // --- Visual Helpers ---
+
+      function setPointer(idx, label) {
+        const node = document.getElementById(`node-${idx}`);
+        const lbl = document.getElementById(`ptr-${idx}`);
+        if (!node) return;
+        if (label === "L") node.classList.add("ptr-l");
+        if (label === "R") node.classList.add("ptr-r");
+        if (lbl) lbl.textContent = label;
+      }
+
+      function clearPointers() {
+        for (let i = 1; i < 2 * n; i++) {
+          const node = document.getElementById(`node-${i}`);
+          const lbl = document.getElementById(`ptr-${i}`);
+          node.classList.remove("ptr-l", "ptr-r");
+          if (lbl) lbl.textContent = "";
+        }
+      }
+
+      function markSelected(idx) {
+        const node = document.getElementById(`node-${idx}`);
+        if (node) node.classList.add("selected");
+        const box = document.getElementById("result-box");
+        const badge = document.createElement("div");
+        badge.className = "mini-badge";
+        badge.textContent = `idx ${idx} (${treeData[idx]})`;
+        box.appendChild(badge);
+      }
+
+      function setMsg(html) {
+        document.getElementById("explanation").innerHTML = html;
+      }
+
+      // --- Logic Control ---
+
+      function initQuery() {
+        resetSim(false);
+        l = parseInt(document.getElementById("lInput").value) + n;
+        r = parseInt(document.getElementById("rInput").value) + n;
+        isRunning = true;
+        stepState = 1;
+        document.getElementById("btn-start").disabled = true;
+        document.getElementById("btn-step").disabled = false;
+        setMsg(`Initialized at leaves <b>L=${l}</b> and <b>R=${r}</b>.`);
+        if (l < r) {
+          setPointer(l, "L");
+          setPointer(r, "R");
+        }
+      }
+
+      function nextStep() {
+        if (!isRunning) return;
+
+        if (l >= r) {
+          clearPointers();
+          setMsg("<strong>L and R have met.</strong> Query Complete!");
+          document.getElementById("btn-step").disabled = true;
+          return;
+        }
+
+        if (stepState === 1) {
+          // Check L
+          if (l % 2 === 1) {
+            setMsg(
+              `L=${l} is <span style="color:var(--highlight-l)">ODD</span> (Right Child).<br>We <b>PICK Node ${l}</b> and move L right.`,
+            );
+            markSelected(l);
+            l++;
+          } else {
+            setMsg(
+              `L=${l} is <span style="color:var(--text-muted)">EVEN</span> (Left Child).<br>Safe to move up.`,
+            );
+          }
+          clearPointers();
+          if (l < r) {
+            setPointer(l, "L");
+            setPointer(r, "R");
+          }
+          stepState = 2;
+        } else if (stepState === 2) {
+          // Check R
+          if (r % 2 === 1) {
+            r--;
+            setMsg(
+              `R is <span style="color:var(--highlight-r)">ODD</span>. Range ends after a Left Child.<br>We <b>PICK Node ${r}</b>.`,
+            );
+            markSelected(r);
+          } else {
+            setMsg(
+              `R=${r} is <span style="color:var(--text-muted)">EVEN</span>. Boundary is clean.`,
+            );
+          }
+          clearPointers();
+          if (l < r) {
+            setPointer(l, "L");
+            setPointer(r, "R");
+          }
+          stepState = 3;
+        } else if (stepState === 3) {
+          // Move Up
+          l = Math.floor(l / 2);
+          r = Math.floor(r / 2);
+          setMsg(
+            `Move both pointers UP to parents.<br>New L=${l}, New R=${r}.`,
+          );
+          clearPointers();
+          if (l < r) {
+            setPointer(l, "L");
+            setPointer(r, "R");
+          }
+          stepState = 1;
+        }
+      }
+
+      function resetSim(full = true) {
+        isRunning = false;
+        document.getElementById("btn-start").disabled = false;
+        document.getElementById("btn-step").disabled = true;
+        if (full) setMsg("Ready.");
+        document.getElementById("result-box").innerHTML =
+          '<small style="width:100%; color:var(--text-muted); margin-bottom:5px;">Accumulator:</small>';
+        const nodes = document.querySelectorAll(".node");
+        nodes.forEach((n) => {
+          n.className = "node";
+          n.querySelector(".ptr-label").textContent = "";
+        });
+      }
+
+      initTreeData();
+      calculateCoords();
+      renderNodes();
+    </script>
+  </body>
+</html>
