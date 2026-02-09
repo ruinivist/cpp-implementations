@@ -64,6 +64,7 @@ class IterSegTree {
                 result = combine_(result, seg_tree_[--right]);
         }
 
+        // NOTE: if you separate, MUST combine at the end
         return result;
     }
 };
